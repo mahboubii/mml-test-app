@@ -3,29 +3,31 @@ const bodyParser = require('body-parser');
 const localtunnel = require('localtunnel');
 const { StreamChat } = require('stream-chat');
 
-const port = 8000;
-const apiKey = 'YOUR_API_KEY';
-const secret = 'YOUR_API_SECRET';
-const chatClient = new StreamChat(apiKey, secret);
+const PORT = 8000;
+const API_KEY = 'YOUR_API_KEY';
+const API_SECRET = 'YOUR_API_SECRET';
 
-// mock function, here you can store the Appointment in your system
+// Stream Chat client used to validate webhook calls
+const chatClient = new StreamChat(API_KEY, API_SECRET);
+
+// mock function, here you can actually store the Appointment in your system
 const storeInDb = (data) => console.log('YES!!! New Appointment', data);
 
 const app = express();
 
-// body-parser parsed the body to a json object for us, it also store the rawBody so we can check the request integrity
+// body-parser parsed the body to a json object for us, it also store the rawBody so later we can check the request integrity
 app.use(bodyParser.json({ verify: (req, res, buf) => (req.rawBody = buf) }));
 
 // security middleware called before all custom commands to verify the integrity of the request
 app.use((req, res, next) => {
   // making sure we are using the correct apiKey
-  if (req.headers['x-api-key'] !== apiKey) {
+  if (req.headers['x-api-key'] !== API_KEY) {
     console.error('invalid api key: ', req.headers['x-api-key']);
     return res.status(403).json({ error: 'invalid api key' });
   }
 
   // check the payload is correctly signed
-  const validSignature = chatClient.verifyWebhook(req.body, req.headers['x-signature']);
+  const validSignature = chatClient.verifyWebhook(req.rawBody, req.headers['x-signature']);
   if (!validSignature) {
     console.error('invalid signature', req);
     return res.status(403).json({ error: 'invalid signature' });
@@ -92,7 +94,7 @@ app.post('/', (req, res) => {
 });
 
 const setupTunnelAndWebhook = async () => {
-  const { url } = await localtunnel({ port });
+  const { url } = await localtunnel({ port: PORT });
   console.log(`Server running remotely in ${url}`);
 
   // you need to these steps only once in production or manually in stream dashboard
@@ -116,9 +118,9 @@ const setupTunnelAndWebhook = async () => {
   await chatClient.updateAppSettings({ custom_action_handler_url: url });
 };
 
-app.listen(port, (err) => {
+app.listen(PORT, (err) => {
   if (err) throw err;
-  console.log(`Server running in http://127.0.0.1:${port}`);
+  console.log(`Server running in http://127.0.0.1:${PORT}`);
 
   setupTunnelAndWebhook();
 });
