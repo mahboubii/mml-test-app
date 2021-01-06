@@ -1,0 +1,11 @@
+body,
+html,
+#root,
+.str-chat-channel-list,
+.str-chat-channel {
+  height: 100%;
+}
+
+.str-chat__container {
+  flex-direction: column;
+}
