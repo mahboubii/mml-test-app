@@ -29,7 +29,7 @@ function App() {
 
   return (
     <Chat client={chatClient}>
-      <button onClick={createNewChannel}>Creat a New Channel</button>
+      <button onClick={createNewChannel}>Create a New Channel</button>
       <ChannelList filters={{ members: { $in: [user.id] } }} options={{ state: true, watch: true, presence: true }} />
       <Channel>
         <ChannelHeader />
